@@ -6,7 +6,7 @@ import DashBoard from './components/DashBoard'
 import { AppContext } from './context/AppContext'
 import Write from './pages/Write'
 import { Routes, Route } from 'react-router-dom'
-import SelectedArticlePage from './components/selectedArticlePage'
+import SelectedArticlePage from './components/SelectedArticlePage'
 
 import LibraryPage from './pages/LibraryPage'
 import ProfilePage from './pages/ProfilePage'
