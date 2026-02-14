@@ -6,7 +6,8 @@ const SelectedArticlePage = () => {
     const navigate = useNavigate();
     const [article, setArticle] = useState(null);
     const [loading, setLoading] = useState(true);
-
+    const [hasClapped, setHasClapped] = useState(false);
+    const [hasSaved, setHasSaved] = useState(false);
     useEffect(() => {
         const fetchArticle = async () => {
             setLoading(true);
@@ -24,12 +25,15 @@ const SelectedArticlePage = () => {
     }, [slug]);
 
     const handleClap = async () => {
+        if (hasClapped) return; 
         try {
+            setHasClapped(true);
+            setArticle(prev => ({ ...prev, claps: prev.claps + 1 }));
             await fetch(`${BACKEND_URL}/api/article/${slug}/clap`, {
                 method: 'POST',
                 credentials: 'include'
             });
-            setArticle(prev => ({ ...prev, claps: prev.claps + 1 }));
+            
         } catch (error) {
             console.error('Error clapping:', error);
         }
@@ -44,7 +48,6 @@ const SelectedArticlePage = () => {
         });
     };
 
-    // Format content properly - Fix for [object Object] issue
     const getFormattedContent = () => {
         if (!article?.content || article.content.length === 0) {
             return '<p class="text-gray-500 italic">Content not available</p>';
@@ -63,6 +66,15 @@ const SelectedArticlePage = () => {
             .join('');
     };
 
+    const handleSave = async() => {
+        try{
+            const result=await fetch(`${BACKEND_URL}/api/article/${slug}/save`, { method: 'POST', credentials: 'include' });
+            if(result.ok){
+                setHasSaved(!hasSaved);
+            }
+        }
+    catch(error){ console.error('Error saving article:', error); }
+    }
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
@@ -166,10 +178,14 @@ const SelectedArticlePage = () => {
                             </button>
                         </div>
                         <div className="flex items-center gap-4">
-                            <button className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all duration-200">
+                            <button onClick={handleSave} className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all duration-200">
+                                {hasSaved?
+                                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                              </svg> :
                                 <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5h14v16l-7-5-7 5V5z" />
-                                </svg>
+                                </svg>}
                             </button>
                             <button className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-full transition-all duration-200">
                                 <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">

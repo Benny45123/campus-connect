@@ -1,25 +1,52 @@
-import React, { useState, useContext } from 'react'
+import React, { useState, useContext, useEffect } from 'react'
 import DashBoard from '../components/DashBoard'
 import { AppContext } from '../context/AppContext'
 import { IoMdClose } from "react-icons/io";
 import { HiOutlineBookmark } from "react-icons/hi2";
 import { FiLock, FiMoreHorizontal } from "react-icons/fi";
-
+import { useNavigate } from 'react-router-dom';
+import {  FiMessageCircle, FiHeart, FiArrowLeft, FiShare2, FiBookmark, FiLink, FiEdit2, FiRepeat, FiBarChart2, FiSettings, FiTrash2, FiShare } from "react-icons/fi";
 function LibraryPage() {
   const { user } = useContext(AppContext);
   const [activeTab, setActiveTab] = useState('Your lists');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [listName, setListName] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
-
+  const [savedArticles, setSavedArticles] = useState([]);
   const tabs = ['Your lists', 'Saved lists', 'Highlights', 'Reading history', 'Responses'];
+  const navigate=useNavigate();
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setListName('');
     setIsPrivate(false);
   };
-
+  useEffect(() => {
+    if (activeTab === 'Saved lists'){
+      handleSavedListsClick();
+    }
+  }, [activeTab])
+  const handleSavedListsClick = async() => {
+    try{
+      const res=await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/library/saved`,{credentials:'include'});
+      if (res.ok){
+        const data=await res.json();
+        setSavedArticles(data.savedArticles);
+        setAuthorName(data.author);
+        console.log('Fetched saved lists:', data);
+        console.log(savedArticles);
+      } else{
+        console.error('Failed to fetch saved lists');
+      }
+    }
+    catch(err){
+      console.error('Error fetching saved lists:', err);  
+    }
+  }
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
   return (
     <DashBoard showStaffPicks={false}>
       <div className="max-w-3xl mx-auto px-4 py-12 relative">
@@ -116,7 +143,89 @@ function LibraryPage() {
               </div>
             </div>
           </>
-        ) : (
+        ) :
+        activeTab === 'Saved lists' ? (
+          <div className="animate-in fade-in duration-500">
+            {/* Table Headers */}
+            <div className="flex border-b border-gray-100 pb-4 text-[11px] font-semibold text-gray-400 uppercase tracking-[0.1em]">
+              <div className="flex-1">Saved Articles</div>
+              <div className="w-32 hidden md:block">Author</div>
+              <div className="w-32 text-right">Read Time</div>
+            </div>
+        
+            {savedArticles.length === 0 ? (
+              <div className="py-24 text-center">
+                {/* <HiOutlineBookmark size={48} className="mx-auto text-gray-300 mb-4" /> */}
+                <p className="text-gray-500 text-lg">No saved articles yet</p>
+                <p className="text-gray-400 text-sm mt-2">Articles you save will appear here</p>
+              </div>
+            ) : (
+              savedArticles.map((article) => (
+                <div 
+                  key={article._id} 
+                  className="group border-b border-gray-100 py-6 last:border-0 hover:bg-gray-50/50 transition-all px-2 -mx-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 flex gap-4 pr-8">
+                      {article.coverImageUrl && (
+                        <div className="shrink-0">
+                          <img
+                            src={article.coverImageUrl}
+                            alt={article.title}
+                            className="w-20 h-20 md:w-24 md:h-16 object-cover rounded shadow-sm border border-gray-100"
+                          />
+                        </div>
+                      )}
+                      <div className="flex flex-col justify-center">
+                        <h2
+                          onClick={() => navigate(`/article/${article.slug}`)}
+                          className="text-base md:text-lg font-bold text-gray-900 mb-1 cursor-pointer hover:text-green-700 transition-colors leading-snug"
+                        >
+                          {article.title}
+                        </h2>
+                        <div className="flex items-center space-x-3 text-xs text-gray-500">
+                          <span>{formatDate(article.createdAt || article.savedAt)}</span>
+                          <span>•</span>
+                          <span>{article.readTime || 0} min read</span>
+                          <div className="flex items-center ml-2 space-x-3">
+                            <span className="flex items-center">
+                              <FiHeart size={12} className="mr-1" /> {article.claps || 0}
+                            </span>
+                            <span className="flex items-center">
+                              <FiMessageCircle size={12} className="mr-1" /> {article.comments || 0}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+        
+                    <div className="w-32 hidden md:flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                        {article.authorName?.charAt(0).toUpperCase() || 'A'}
+                      </div>
+                      <span className="text-sm text-gray-500 truncate">
+                        {article.authorName || 'Anonymous'}
+                      </span>
+                    </div>
+        
+                    <div className="w-32 flex flex-col items-end gap-2">
+                      <span className="text-sm font-medium text-gray-700">
+                        {article.readTime || 0} min
+                      </span>
+                      <button
+                        className="text-[#1a8917] hover:text-[#156d12] transition-colors p-1"
+                        onClick={() => navigate(`/article/${article.slug}`)}
+                      >
+                        <HiOutlineBookmark size={20} className="fill-current" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        ) :
+        (
           <div className="py-20 flex flex-col items-center justify-center text-center">
             <p className="text-gray-500 text-sm">No {activeTab.toLowerCase()} to show now.</p>
           </div>
@@ -195,3 +304,7 @@ function LibraryPage() {
 }
 
 export default LibraryPage
+
+
+
+

@@ -1,8 +1,6 @@
 import { createContext,useState,useEffect } from "react";
 import React from 'react';
-import studyImg from '../assets/college_library_study_1769178240541.png';
-import eventImg from '../assets/campus_event_students_1769178261694.png';
-import codingImg from '../assets/student_laptop_coding_1769178282319.png';
+
 import { checkLogin } from "../services/BackendHandler";
 import { useSearchParams } from "react-router-dom";
 const BACKEND_URL=import.meta.env.VITE_BACKEND_URL;
