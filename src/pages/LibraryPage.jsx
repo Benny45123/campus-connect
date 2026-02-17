@@ -5,7 +5,7 @@ import { IoMdClose } from "react-icons/io";
 import { HiOutlineBookmark } from "react-icons/hi2";
 import { FiLock, FiMoreHorizontal } from "react-icons/fi";
 import { useNavigate } from 'react-router-dom';
-import {  FiMessageCircle, FiHeart, FiArrowLeft, FiShare2, FiBookmark, FiLink, FiEdit2, FiRepeat, FiBarChart2, FiSettings, FiTrash2, FiShare } from "react-icons/fi";
+import {  FiMessageCircle, FiHeart } from "react-icons/fi";
 function LibraryPage() {
   const { user } = useContext(AppContext);
   const [activeTab, setActiveTab] = useState('Your lists');
@@ -21,18 +21,13 @@ function LibraryPage() {
     setListName('');
     setIsPrivate(false);
   };
-  useEffect(() => {
-    if (activeTab === 'Saved lists'){
-      handleSavedListsClick();
-    }
-  }, [activeTab])
   const handleSavedListsClick = async() => {
     try{
       const res=await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/library/saved`,{credentials:'include'});
       if (res.ok){
         const data=await res.json();
         setSavedArticles(data.savedArticles);
-        setAuthorName(data.author);
+        // setAuthorName(data.author);
         console.log('Fetched saved lists:', data);
         console.log(savedArticles);
       } else{
@@ -43,6 +38,12 @@ function LibraryPage() {
       console.error('Error fetching saved lists:', err);  
     }
   }
+  useEffect(() => {
+    if (activeTab === 'Saved lists'){
+      handleSavedListsClick();
+    }
+  }, [activeTab])
+  
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
