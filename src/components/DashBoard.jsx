@@ -1,5 +1,5 @@
-import campusconnect_logo from "../assets/campusconnect_logo_whitebg.jpg"
-import { useState } from "react"
+// import campusconnect_logo from "../assets/campusconnect_logo_whitebg.jpg"
+// import { useState } from "react"
 import { useContext } from "react";
 import { AppContext } from "../context/AppContext";
 import Header_HomePage from "./Header_HomePage";

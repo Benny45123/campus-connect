@@ -14,7 +14,8 @@ const SelectedArticlePage = () => {
             try {
                 const res = await fetch(`${BACKEND_URL}/api/article/${slug}`,{ credentials: 'include' });
                 const data = await res.json();
-                setArticle(data);
+                setArticle(data.article);
+                setHasSaved(data.hasSaved);
             } catch (error) {
                 console.error('Error fetching article:', error);
             } finally {

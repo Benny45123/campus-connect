@@ -1,5 +1,5 @@
 import emailIcon from "../assets/emailIcon.png"
-import { useRef, useState } from "react"
+import { useRef } from "react"
 import { Register } from "../services/BackendHandler"
 
 const SignUpComp=({setAuthType})=>{

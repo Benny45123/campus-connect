@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
 import DashBoard from '../components/DashBoard'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { AppContext } from '../context/AppContext'
 import { FiMoreHorizontal, FiMessageCircle, FiHeart, FiArrowLeft, FiShare2, FiBookmark, FiLink, FiEdit2, FiRepeat, FiBarChart2, FiSettings, FiTrash2, FiShare } from "react-icons/fi";
 
@@ -83,7 +83,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 function StoriesPage() {
   const { user } = useContext(AppContext);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('Drafts');
   const [publishedArticles, setPublishedArticles] = useState([]);
   const [selectedArticle, setSelectedArticle] = useState(null);
@@ -91,13 +91,6 @@ function StoriesPage() {
   const [activeMenu, setActiveMenu] = useState(null);
 
   const tabs = ['Drafts', 'Scheduled', 'Published', 'Unlisted', 'Submissions'];
-
-  useEffect(() => {
-    if (activeTab === 'Published' && user) {
-      fetchUserArticles();
-    }
-  }, [activeTab, user]);
-
   const fetchUserArticles = async () => {
     setLoading(true);
     try {
@@ -120,6 +113,14 @@ function StoriesPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (activeTab === 'Published' && user) {
+      fetchUserArticles();
+    }
+  }, [activeTab, user]);
+
+
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
