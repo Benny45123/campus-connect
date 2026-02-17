@@ -21,12 +21,12 @@ function App() {
       <Routes>
         <Route path='/' element={user ? <HomePage /> : <Auth />} />
         <Route path='/' element={<HomePage />} />
-        <Route path='/Library' element={<LibraryPage />} />
-        <Route path='/Profile' element={<ProfilePage />} />
-        <Route path='/Stories' element={<StoriesPage />} />
+        <Route path='/Library' element={user?<LibraryPage /> : <Auth/>} />
+        <Route path='/Profile' element={user?<ProfilePage /> : <Auth/>} />
+        <Route path='/Stories' element={user?<StoriesPage /> : <Auth/>} />
         <Route path='/new-story' element={user ? <Write /> : <Auth />} />
-        <Route path='/:search' element={<HomePage />} />
-        <Route path='/article/:slug' element={<SelectedArticlePage/>}/>
+        <Route path='/:search' element={user?<HomePage /> : <Auth/>} />
+        <Route path='/article/:slug' element={user?<SelectedArticlePage/> : <Auth/>}/>
       </Routes>
     </>
   )
