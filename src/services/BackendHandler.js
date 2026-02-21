@@ -117,5 +117,20 @@ const PostArticle = async ({data}) => {
       console.error('Error:',error);
     }
   }
+  const deleteArticle=async({articleId})=>{
+    try{
+      const response=await fetch(`${BACKEND_URL}/api/article/delete/${articleId}`,{
+        method:'DELETE',
+        credentials:'include',
+      });
+      if(response.ok){
+        console.log("Article deleted");
+        return true
+      }
+    }
+    catch(error){
+      console.error('Error:',error);
+    }
+  }
   
-export {Login,Register,checkLogin,PostArticle,imageUpload,handleLogout};
+export {Login,Register,checkLogin,PostArticle,imageUpload,handleLogout,deleteArticle};
