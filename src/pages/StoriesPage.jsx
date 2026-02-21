@@ -3,6 +3,7 @@ import DashBoard from '../components/DashBoard'
 import { Link } from 'react-router-dom'
 import { AppContext } from '../context/AppContext'
 import { FiMoreHorizontal, FiMessageCircle, FiHeart, FiArrowLeft, FiShare2, FiBookmark, FiLink, FiEdit2, FiRepeat, FiBarChart2, FiSettings, FiTrash2, FiShare } from "react-icons/fi";
+import { deleteArticle } from '../services/BackendHandler';
 
 // const SAMPLE_ARTICLES = [
 //   {
@@ -89,6 +90,8 @@ function StoriesPage() {
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeMenu, setActiveMenu] = useState(null);
+  const [copyStatus, setCopyStatus] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const tabs = ['Drafts', 'Scheduled', 'Published', 'Unlisted', 'Submissions'];
   const fetchUserArticles = async () => {
@@ -126,6 +129,21 @@ function StoriesPage() {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
+
+  const handleCopy = async(slug) => {
+    const url = `${window.location.origin}/article/${slug}`;
+    try{
+      await navigator.clipboard.writeText(url);
+      setCopyStatus(slug);
+    }
+    catch(err){
+      console.error('Failed to copy: ', err);
+    }
+  }
+  const deleteHandler=async (id)=>{
+    const result=deleteArticle({articleId:id});
+    return result;
+  }
 
   if (selectedArticle) {
     return (
@@ -355,8 +373,8 @@ function StoriesPage() {
                               onClick={() => setActiveMenu(null)}
                             ></div>
                             <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-20 animate-in fade-in zoom-in-95 duration-200">
-                              <button className="w-full flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                <FiLink className="mr-3 text-gray-400" /> Copy link
+                              <button onClick={()=>handleCopy(article.slug)} className="w-full flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                <FiLink className="mr-3 text-gray-400" /> {copyStatus===article.slug ? 'Link copied!' : 'Copy link'}
                               </button>
                               <button className="w-full flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                                 <FiShare className="mr-3 text-gray-400" /> Share
@@ -376,7 +394,10 @@ function StoriesPage() {
                                 <FiSettings className="mr-3 text-gray-400" /> View settings
                               </button>
                               <div className="h-px bg-gray-100 my-1 mx-2"></div>
-                              <button className="w-full flex items-center px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium">
+                              <button onClick={()=>{
+                                setDeleteTarget(article);
+                                setActiveMenu(null);
+                              }} className="w-full flex items-center px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium">
                                 <FiTrash2 className="mr-3 text-red-400" /> Delete story
                               </button>
                             </div>
@@ -402,6 +423,36 @@ function StoriesPage() {
           )}
         </div>
       </div>
+      {deleteTarget && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div className="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full mx-4 animate-in fade-in zoom-in-95 duration-200">
+      <h2 className="text-xl font-bold text-gray-900 mb-2">Delete this story?</h2>
+      <p className="text-gray-500 text-sm mb-6">
+        "<span className="font-medium text-gray-700">{deleteTarget.title}</span>" will be permanently deleted. This action cannot be undone.
+      </p>
+      <div className="flex gap-3 justify-end">
+        <button
+          onClick={() => setDeleteTarget(null)}
+          className="px-5 py-2 rounded-full text-sm font-medium border border-gray-200 hover:border-gray-400 text-gray-700 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={() => {
+            const result=deleteHandler(deleteTarget._id);
+            if (result){
+            setPublishedArticles(prev => prev.filter(a => a._id !== deleteTarget._id));
+            setDeleteTarget(null);
+            }
+          }}
+          className="px-5 py-2 rounded-full text-sm font-medium bg-red-600 hover:bg-red-700 text-white transition-colors"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </DashBoard>
   )
 }
