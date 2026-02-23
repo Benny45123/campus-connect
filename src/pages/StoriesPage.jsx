@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { AppContext } from '../context/AppContext'
 import { FiMoreHorizontal, FiMessageCircle, FiHeart, FiArrowLeft, FiShare2, FiBookmark, FiLink, FiEdit2, FiRepeat, FiBarChart2, FiSettings, FiTrash2, FiShare } from "react-icons/fi";
 import { deleteArticle } from '../services/BackendHandler';
+import { useNavigate } from 'react-router-dom';
 
 // const SAMPLE_ARTICLES = [
 //   {
@@ -84,7 +85,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 function StoriesPage() {
   const { user } = useContext(AppContext);
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('Drafts');
   const [publishedArticles, setPublishedArticles] = useState([]);
   const [selectedArticle, setSelectedArticle] = useState(null);
@@ -135,6 +136,7 @@ function StoriesPage() {
     try{
       await navigator.clipboard.writeText(url);
       setCopyStatus(slug);
+      setTimeout(() => setCopyStatus(null), 3000);
     }
     catch(err){
       console.error('Failed to copy: ', err);
@@ -143,6 +145,10 @@ function StoriesPage() {
   const deleteHandler=async (id)=>{
     const result=deleteArticle({articleId:id});
     return result;
+  }
+  const editStoryHandler=(article)=>{
+    navigate('/new-story', { state: { article } });
+    setActiveMenu(null);
   }
 
   if (selectedArticle) {
@@ -380,7 +386,7 @@ function StoriesPage() {
                                 <FiShare className="mr-3 text-gray-400" /> Share
                               </button>
                               <div className="h-px bg-gray-100 my-1 mx-2"></div>
-                              <button className="w-full flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                              <button onClick={()=>editStoryHandler(article)} className="w-full flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                                 <FiEdit2 className="mr-3 text-gray-400" /> Edit story
                               </button>
                               <button className="w-full flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">

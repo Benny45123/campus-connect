@@ -3,24 +3,49 @@ import { AppContext } from '../context/AppContext'; // Import your context
 import { FiCamera, FiPlay, FiCode, FiMoreHorizontal, FiX, FiTerminal } from 'react-icons/fi';
 import { FaUnsplash } from 'react-icons/fa';
 import { imageUpload,PostArticle } from '../services/BackendHandler';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation} from 'react-router-dom';
 
 import campusconnect_logo from "../assets/campusconnect_logo_whitebg.jpg";
 const Write = () => {
     const navigate=useNavigate();
-    const [title, setTitle] = useState("");
-    const [story, setStory] = useState("");
+    const location=useLocation();
+    const editingArticle=location.state?.article || null;
+    console.log("Editing article:", editingArticle);
+    const [title, setTitle] = useState(()=>{
+        return editingArticle? editingArticle.title : "";
+    });
+    const [story, setStory] = useState(()=>{
+        if (!editingArticle) return "";
+        // Convert content blocks back to plain text string
+        if (Array.isArray(editingArticle.content)) {
+            return editingArticle.content
+                .map(block => {
+                    const text = typeof block.data === 'string' ? block.data : block.data?.text || '';
+                    if (block.type === 'heading') return `## ${text}`;
+                    if (block.type === 'quote') return `> ${text}`;
+                    if (block.type === 'code') return `\`\`\`\n${text}\n\`\`\``;
+                    return text;
+                })
+                .join('\n\n');
+        }
+        return editingArticle.content || "";
+    });
     const [showMenu, setShowMenu] = useState(false);
     const [showTitleMenu, setShowTitleMenu] = useState(false);
     const [focusedField, setFocusedField] = useState('story'); // Default to story
     const imageInputRef = useRef(null);
-    const [uploadedImage,setUploadedImage]=useState(null);
+    const [uploadedImage,setUploadedImage]=useState(()=>{
+        return editingArticle?.coverImageUrl || null;
+    });
     const [published,setPublished]=useState(false);
     const canPublish=title.trim().length>=5 && story.trim().length>50;
+
+
     const handlePublishClick = async () => {
         if(!canPublish) return;
         const data={title,story,uploadedImage};
-        const response=await PostArticle({data});
+        const edit=editingArticle? {_id:editingArticle._id} : null;
+        const response=await PostArticle({data , editingArticleId: edit? edit._id : null});
         if(response){
             // alert("Article published successfully!");
             setPublished(true);
@@ -67,7 +92,7 @@ const Write = () => {
                 <div className="flex items-center  space-x-3 ">
                     <img src={campusconnect_logo} alt="Campus Connect Logo" className="logo h-60 w-auto -translate-y-23" />
 
-                    <span className="text-sm text-gray-400 mt-1">{published? 'Published' : 'Draft'}</span>
+                    <span className="text-sm text-gray-400 mt-1">{published? 'Published' : editingArticle ? 'Editing' : 'Draft'}</span>
                 </div>
 
                 <div className="flex items-center space-x-4 md:space-x-6">
