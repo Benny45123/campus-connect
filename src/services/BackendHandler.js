@@ -58,11 +58,13 @@ const checkLogin=async ()=>{
         return null;
     }
 }
-const PostArticle = async ({data}) => {
+const PostArticle = async ({data,editingArticleId}) => {
     try {
+      const method = editingArticleId ? "PUT" : "POST";
       const articleData={title:data.title,content:[{type:"paragraph",data:{text:data.story}}],coverImageUrl:data.uploadedImage,status:"published"};
-      const response = await fetch(`${BACKEND_URL}/api/article/post`, {
-        method: "POST",
+      const url = editingArticleId ? `${BACKEND_URL}/api/article/update/${editingArticleId}` : `${BACKEND_URL}/api/article/post`;
+      const response = await fetch(url, {
+        method: method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(articleData)
