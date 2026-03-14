@@ -131,22 +131,22 @@ function StoriesPage() {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  const handleCopy = async(slug) => {
+  const handleCopy = async (slug) => {
     const url = `${window.location.origin}/article/${slug}`;
-    try{
+    try {
       await navigator.clipboard.writeText(url);
       setCopyStatus(slug);
       setTimeout(() => setCopyStatus(null), 3000);
     }
-    catch(err){
+    catch (err) {
       console.error('Failed to copy: ', err);
     }
   }
-  const deleteHandler=async (id)=>{
-    const result=deleteArticle({articleId:id});
+  const deleteHandler = async (id) => {
+    const result = deleteArticle({ articleId: id });
     return result;
   }
-  const editStoryHandler=(article)=>{
+  const editStoryHandler = (article) => {
     navigate('/new-story', { state: { article } });
     setActiveMenu(null);
   }
@@ -173,8 +173,8 @@ function StoriesPage() {
               className="w-12 h-12 rounded-full mr-4 object-cover ring-2 ring-gray-50"
             /> */}
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex m-5 items-center justify-center text-white text-lg font-bold">
-                                        {selectedArticle.authorName?.charAt(0).toUpperCase() || 'A'}
-                                    </div>
+              {selectedArticle.authorName?.charAt(0).toUpperCase() || 'A'}
+            </div>
             <div className="flex-1">
               <div className="flex items-center justify-between">
                 <div>
@@ -206,16 +206,43 @@ function StoriesPage() {
               selectedArticle.content.map((block, index) => {
                 // Handle both formats: data as string or data as object with text property
                 const content = typeof block.data === 'string' ? block.data : block.data?.text || '';
-                
+
                 switch (block.type) {
                   case 'heading':
                     return <h2 key={index} className="text-2xl font-bold mt-8 mb-4">{content}</h2>;
                   case 'paragraph':
                     return <p key={index} className="mb-4">{content}</p>;
                   case 'image':
-                    return <img key={index} src={content} alt="" className="w-full rounded-lg my-8" />;
+                    return (
+                      <figure key={index} className="my-8">
+                        <img src={block.data?.url || ''} alt={block.data?.alt || ''} className="w-full rounded-xl shadow-md" />
+                        {block.data?.caption && (
+                          <figcaption className="text-center text-sm text-gray-500 mt-2 italic">{block.data.caption}</figcaption>
+                        )}
+                      </figure>
+                    );
                   case 'code':
-                    return <pre key={index} className="bg-gray-100 p-4 rounded-md overflow-x-auto my-6 font-mono text-sm"><code>{content}</code></pre>;
+                    return (
+                      <div key={index} className="my-8 rounded-xl overflow-hidden border border-gray-200">
+                        <div className="bg-gray-800 px-4 py-2">
+                          <span className="text-xs text-gray-400 font-mono">{block.data?.language || 'plaintext'}</span>
+                        </div>
+                        <pre className="bg-gray-900 p-5 overflow-x-auto">
+                          <code className="text-sm text-green-300 font-mono leading-relaxed">{block.data?.code || ''}</code>
+                        </pre>
+                      </div>
+                    );
+                  case 'links':
+                    return (
+                      <a key={index} href={block.data?.url || '#'} target="_blank" rel="noopener noreferrer"
+                        className="flex items-start gap-4 my-6 p-4 border border-gray-200 rounded-xl hover:shadow-md transition-all no-underline group">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 group-hover:text-blue-600 truncate">{block.data?.title || block.data?.url}</p>
+                          {block.data?.description && <p className="text-sm text-gray-500 mt-1">{block.data.description}</p>}
+                          <p className="text-xs text-blue-500 mt-2 truncate">{block.data?.url}</p>
+                        </div>
+                      </a>
+                    );
                   case 'quote':
                     return <blockquote key={index} className="border-l-4 border-gray-900 pl-6 my-8 italic text-xl text-gray-700">{content}</blockquote>;
                   default:
@@ -379,14 +406,14 @@ function StoriesPage() {
                               onClick={() => setActiveMenu(null)}
                             ></div>
                             <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-20 animate-in fade-in zoom-in-95 duration-200">
-                              <button onClick={()=>handleCopy(article.slug)} className="w-full flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                <FiLink className="mr-3 text-gray-400" /> {copyStatus===article.slug ? 'Link copied!' : 'Copy link'}
+                              <button onClick={() => handleCopy(article.slug)} className="w-full flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                <FiLink className="mr-3 text-gray-400" /> {copyStatus === article.slug ? 'Link copied!' : 'Copy link'}
                               </button>
                               <button className="w-full flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                                 <FiShare className="mr-3 text-gray-400" /> Share
                               </button>
                               <div className="h-px bg-gray-100 my-1 mx-2"></div>
-                              <button onClick={()=>editStoryHandler(article)} className="w-full flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                              <button onClick={() => editStoryHandler(article)} className="w-full flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                                 <FiEdit2 className="mr-3 text-gray-400" /> Edit story
                               </button>
                               <button className="w-full flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
@@ -400,7 +427,7 @@ function StoriesPage() {
                                 <FiSettings className="mr-3 text-gray-400" /> View settings
                               </button>
                               <div className="h-px bg-gray-100 my-1 mx-2"></div>
-                              <button onClick={()=>{
+                              <button onClick={() => {
                                 setDeleteTarget(article);
                                 setActiveMenu(null);
                               }} className="w-full flex items-center px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium">
@@ -430,35 +457,35 @@ function StoriesPage() {
         </div>
       </div>
       {deleteTarget && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-    <div className="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full mx-4 animate-in fade-in zoom-in-95 duration-200">
-      <h2 className="text-xl font-bold text-gray-900 mb-2">Delete this story?</h2>
-      <p className="text-gray-500 text-sm mb-6">
-        "<span className="font-medium text-gray-700">{deleteTarget.title}</span>" will be permanently deleted. This action cannot be undone.
-      </p>
-      <div className="flex gap-3 justify-end">
-        <button
-          onClick={() => setDeleteTarget(null)}
-          className="px-5 py-2 rounded-full text-sm font-medium border border-gray-200 hover:border-gray-400 text-gray-700 transition-colors"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={() => {
-            const result=deleteHandler(deleteTarget._id);
-            if (result){
-            setPublishedArticles(prev => prev.filter(a => a._id !== deleteTarget._id));
-            setDeleteTarget(null);
-            }
-          }}
-          className="px-5 py-2 rounded-full text-sm font-medium bg-red-600 hover:bg-red-700 text-white transition-colors"
-        >
-          Delete
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full mx-4 animate-in fade-in zoom-in-95 duration-200">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Delete this story?</h2>
+            <p className="text-gray-500 text-sm mb-6">
+              "<span className="font-medium text-gray-700">{deleteTarget.title}</span>" will be permanently deleted. This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                className="px-5 py-2 rounded-full text-sm font-medium border border-gray-200 hover:border-gray-400 text-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  const result = deleteHandler(deleteTarget._id);
+                  if (result) {
+                    setPublishedArticles(prev => prev.filter(a => a._id !== deleteTarget._id));
+                    setDeleteTarget(null);
+                  }
+                }}
+                className="px-5 py-2 rounded-full text-sm font-medium bg-red-600 hover:bg-red-700 text-white transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashBoard>
   )
 }

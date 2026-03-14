@@ -1,12 +1,25 @@
 
-import React, {  useContext } from 'react';
+import React, { useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { toggleFollow } from '../services/BackendHandler';
 
 const ArticleFeed = () => {
     const navigate = useNavigate();
-    const { articles, loading,setLoading } = useContext(AppContext);
+    const { articles, loading, setLoading } = useContext(AppContext);
+    const { user } = useContext(AppContext);
+    const [followingMap, setFollowingMap] = useState({}); // { authorId: boolean }
 
+    const handleFollow = async (e, authorId) => {
+        e.stopPropagation(); // don't navigate to article
+        setFollowingMap(prev => ({ ...prev, [authorId]: !prev[authorId] }));
+        const result = await toggleFollow(authorId);
+        if (!result) {
+            // revert
+            setFollowingMap(prev => ({ ...prev, [authorId]: !prev[authorId] }));
+        }
+    };
 
 
     const formatDate = (dateString) => {
@@ -14,11 +27,11 @@ const ArticleFeed = () => {
         const now = new Date();
         const diffTime = Math.abs(now - date);
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        
+
         if (diffDays === 0) return 'Today';
         if (diffDays === 1) return 'Yesterday';
         if (diffDays < 30) return `${diffDays} days ago`;
-        
+
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     };
 
@@ -71,18 +84,30 @@ const ArticleFeed = () => {
                                     <span className="text-xs font-bold text-gray-900">
                                         {article.authorName || 'Anonymous'}
                                     </span>
+                                    {/* Follow button — hidden if it's your own article */}
+                                    {user?.name !== article.authorName && (
+                                        <button
+                                            onClick={(e) => handleFollow(e, article.author)}
+                                            className={`ml-2 text-xs px-2 py-0.5 rounded-full border transition-all ${followingMap[article.author]
+                                                ? 'border-gray-300 text-gray-500 hover:text-red-500 hover:border-red-300'
+                                                : 'border-green-600 text-green-600 hover:bg-green-50'
+                                                }`}
+                                        >
+                                            {followingMap[article.author] ? 'Following' : '+ Follow'}
+                                        </button>
+                                    )}
                                 </div>
-                                
-                                <h2 
+
+                                <h2
                                     onClick={() => handleArticleClick(article.slug)}
                                     className="text-xl md:text-2xl font-bold text-gray-900 mb-2 leading-tight group-hover:text-gray-700 cursor-pointer"
                                 >
                                     {article.title}
                                 </h2>
-                                
+
                                 <div className="flex items-center space-x-2 mb-4">
                                     {article.tags?.slice(0, 3).map((tag, index) => (
-                                        <span 
+                                        <span
                                             key={index}
                                             className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full hover:bg-gray-200 cursor-pointer"
                                         >
@@ -90,7 +115,7 @@ const ArticleFeed = () => {
                                         </span>
                                     ))}
                                 </div>
-                                
+
                                 <div className="flex items-center justify-between mt-auto">
                                     <div className="flex items-center space-x-4 text-gray-500">
                                         <span className="text-xs">
@@ -120,8 +145,8 @@ const ArticleFeed = () => {
                                     </div>
                                 </div>
                             </div>
-                            
-                            <div 
+
+                            <div
                                 onClick={() => handleArticleClick(article.slug)}
                                 className="w-full md:w-48 h-32 md:h-32 order-1 md:order-2 flex-shrink-0 cursor-pointer"
                             >
