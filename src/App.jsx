@@ -7,7 +7,7 @@ import { AppContext } from './context/AppContext'
 import Write from './pages/Write'
 import { Routes, Route } from 'react-router-dom'
 import SelectedArticlePage from './components/SelectedArticlePage'
-
+import FollowingPage from './pages/FollowingPage';
 import LibraryPage from './pages/LibraryPage'
 import ProfilePage from './pages/ProfilePage'
 import StoriesPage from './pages/StoriesPage'
@@ -21,12 +21,13 @@ function App() {
       <Routes>
         <Route path='/' element={user ? <HomePage /> : <Auth />} />
         <Route path='/' element={<HomePage />} />
-        <Route path='/Library' element={user?<LibraryPage /> : <Auth/>} />
-        <Route path='/Profile' element={user?<ProfilePage /> : <Auth/>} />
-        <Route path='/Stories' element={user?<StoriesPage /> : <Auth/>} />
+        <Route path='/Library' element={user ? <LibraryPage /> : <Auth />} />
+        <Route path='/Profile' element={user ? <ProfilePage /> : <Auth />} />
+        <Route path='/Stories' element={user ? <StoriesPage /> : <Auth />} />
         <Route path='/new-story' element={user ? <Write /> : <Auth />} />
-        <Route path='/:search' element={user?<HomePage /> : <Auth/>} />
-        <Route path='/article/:slug' element={user?<SelectedArticlePage/> : <Auth/>}/>
+        <Route path='/:search' element={user ? <HomePage /> : <Auth />} />
+        <Route path='/article/:slug' element={user ? <SelectedArticlePage /> : <Auth />} />
+        <Route path="/Following" element={<FollowingPage />} />
       </Routes>
     </>
   )
