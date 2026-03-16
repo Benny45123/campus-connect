@@ -1,9 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 import { toggleFollow, getUserProfile } from '../services/BackendHandler';
 import { useContext } from 'react';
 import { AppContext } from '../context/AppContext';
+import AuthorHoverCard from '../components/AuthorHoverCard';
+import { saveToHistory } from '../utils/readingHistory';
+
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const SelectedArticlePage = () => {
     const { slug } = useParams();
@@ -19,6 +22,16 @@ const SelectedArticlePage = () => {
     const [followersCount, setFollowersCount] = useState(0);
     const [followLoading, setFollowLoading] = useState(false);
     const [authorId, setAuthorId] = useState(null);
+    const [authorHoverVisible, setAuthorHoverVisible] = useState(false);
+    const authorHoverTimeout = useRef(null);
+
+    const handleAuthorMouseEnter = () => {
+        clearTimeout(authorHoverTimeout.current);
+        authorHoverTimeout.current = setTimeout(() => setAuthorHoverVisible(true), 300);
+    };
+    const handleAuthorMouseLeave = () => {
+        authorHoverTimeout.current = setTimeout(() => setAuthorHoverVisible(false), 200);
+    };
     useEffect(() => {
         const fetchArticle = async () => {
             setLoading(true);
@@ -26,20 +39,21 @@ const SelectedArticlePage = () => {
                 const res = await fetch(`${BACKEND_URL}/api/article/${slug}`, { credentials: 'include' });
                 const data = await res.json();
                 setArticle(data.article);
-                const author = data.article?.author;
+                 setHasSaved(data.hasSaved);
 
-                const resolvedAuthorId = author?._id?.toString() || author?.toString() || null;
-                setAuthorId(resolvedAuthorId);
-                //setAuthorId(typeof author === 'object' ? author?._id : author);
-                setHasSaved(data.hasSaved);
-            } catch (error) {
-                console.error('Error fetching article:', error);
-            } finally {
-                setLoading(false);
+            // ← Save to reading history
+            if (data.article) {
+                saveToHistory(data.article);
             }
-        };
-        fetchArticle();
-    }, [slug]);
+
+        } catch (error) {
+            console.error('Error fetching article:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    fetchArticle();
+}, [slug]);
     useEffect(() => {
         if (!authorId) return;
         const fetchAuthorProfile = async () => {
@@ -346,39 +360,62 @@ const SelectedArticlePage = () => {
 
                 {/* Author Card */}
 
-                <div className="mt-16 p-8 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl border border-blue-100 shadow-lg">
-                    <div className="flex items-start gap-6">
-                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center text-white text-3xl font-bold shadow-lg flex-shrink-0">
-                            {article.authorName?.charAt(0).toUpperCase() || 'A'}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-4 mb-2">
-                                <h3 className="text-xl font-bold text-gray-900">
-                                    {article.authorName || 'Anonymous'}
-                                </h3>
-                                {/* Only show Follow if not viewing your own article */}
-                                {user?.name !== article.authorName && (
-                                    <button
-                                        onClick={handleFollow}
-                                        disabled={followLoading}
-                                        className={`px-5 py-2 rounded-full text-sm font-medium transition-all flex-shrink-0 ${isFollowing
-                                            ? 'border border-gray-300 text-gray-700 hover:border-red-300 hover:text-red-600'
-                                            : 'bg-green-600 hover:bg-green-700 text-white'
-                                            }`}
+                    <div className="mt-16 p-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
+                        <div className="flex items-center gap-4">
+                            
+                            {/* Avatar — clickable */}
+                            <div
+                                onClick={() => navigate(`/user/${authorId}`)}
+                                className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
+                            >
+                                {article.authorName?.charAt(0).toUpperCase() || 'A'}
+                            
+
+                                {/* Hover card on avatar */}
+                                {authorId && (
+                                    <div
+                                        onMouseEnter={() => clearTimeout(authorHoverTimeout.current)}
+                                        onMouseLeave={handleAuthorMouseLeave}
                                     >
-                                        {followLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
-                                    </button>
+                                        <AuthorHoverCard
+                                            authorId={authorId}
+                                            authorName={article.authorName}
+                                            visible={authorHoverVisible}
+                                        />
+                                    </div>
                                 )}
                             </div>
-                            <p className="text-sm text-gray-500 mb-3">
-                                {followersCount} follower{followersCount !== 1 ? 's' : ''}
-                            </p>
-                            <p className="text-gray-600 text-sm">
-                                Thank you for reading. Stay tuned for more content!
-                            </p>
+
+                            {/* Name + followers */}
+                            <div className="flex-1 min-w-0">
+                                {/* Name — clickable */}
+                                <h3
+                                    onClick={() => navigate(`/user/${authorId}`)}
+                                    className="text-lg font-bold text-gray-900 cursor-pointer hover:underline"
+                                >
+                                    {article.authorName || 'Anonymous'}
+                                </h3>
+                                <p className="text-sm text-gray-500">
+                                    {followersCount.toLocaleString()} follower{followersCount !== 1 ? 's' : ''}
+                                </p>
+                            </div>
+
+                            {/* Follow button — hidden for own articles */}
+                            {user?.name !== article.authorName && (
+                                <button
+                                    onClick={handleFollow}
+                                    disabled={followLoading}
+                                    className={`px-5 py-2 rounded-full text-sm font-semibold transition-all flex-shrink-0 ${
+                                        isFollowing
+                                            ? 'border border-gray-300 text-gray-700 hover:border-red-300 hover:text-red-600'
+                                            : 'bg-green-500 hover:bg-green-600 text-white'
+                                    }`}
+                                >
+                                    {followLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
+                                </button>
+                            )}
                         </div>
                     </div>
-                </div>
             </article>
         </div>
     );

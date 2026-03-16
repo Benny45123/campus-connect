@@ -6,6 +6,8 @@ import { HiOutlineBookmark } from "react-icons/hi2";
 import { FiLock, FiMoreHorizontal } from "react-icons/fi";
 import { useNavigate } from 'react-router-dom';
 import {  FiMessageCircle, FiHeart } from "react-icons/fi";
+import { getHistory, clearHistory, removeFromHistory } from '../utils/readingHistory';
+import { FiTrash2, FiX } from 'react-icons/fi'; // FiX for individual remove
 function LibraryPage() {
   const { user } = useContext(AppContext);
   const [activeTab, setActiveTab] = useState('Your lists');
@@ -15,6 +17,8 @@ function LibraryPage() {
   const [savedArticles, setSavedArticles] = useState([]);
   const tabs = ['Your lists', 'Saved lists', 'Highlights', 'Reading history', 'Responses'];
   const navigate=useNavigate();
+  const [readingHistory, setReadingHistory] = useState([]);
+const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -43,7 +47,36 @@ function LibraryPage() {
       handleSavedListsClick();
     }
   }, [activeTab])
-  
+  useEffect(() => {
+    if (activeTab === 'Reading history') {
+        setReadingHistory(getHistory());
+    }
+}, [activeTab]);
+
+  const handleClearHistory = () => {
+    clearHistory();
+    setReadingHistory([]);
+    setShowClearConfirm(false);
+};
+
+const handleRemoveOne = (articleId) => {
+    removeFromHistory(articleId);
+    setReadingHistory(prev => prev.filter(a => a._id !== articleId));
+};
+const formatOpenedAt = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1)   return 'Just now';
+    if (diffMins < 60)  return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7)   return `${diffDays}d ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -145,6 +178,7 @@ function LibraryPage() {
             </div>
           </>
         ) :
+        
         activeTab === 'Saved lists' ? (
           <div className="animate-in fade-in duration-500">
             {/* Table Headers */}
@@ -226,6 +260,119 @@ function LibraryPage() {
             )}
           </div>
         ) :
+activeTab === 'Reading history' ? (
+    <div className="animate-in fade-in duration-500">
+
+        {readingHistory.length === 0 ? (
+            <div className="py-24 text-center">
+                <svg className="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-gray-500 text-lg">No reading history yet</p>
+                <p className="text-gray-400 text-sm mt-1">Articles you open will appear here</p>
+            </div>
+        ) : (
+            <>
+                {/* Header row with clear button */}
+                <div className="flex items-center justify-between mb-6">
+                    <p className="text-sm text-gray-500">
+                        {readingHistory.length} article{readingHistory.length !== 1 ? 's' : ''}
+                    </p>
+                    <button
+                        onClick={() => setShowClearConfirm(true)}
+                        className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                        <FiTrash2 size={14} />
+                        Clear history
+                    </button>
+                </div>
+
+                {/* Article list */}
+                <div className="space-y-0">
+                    {readingHistory.map(article => (
+                        <div
+                            key={`${article._id}-${article.openedAt}`}
+                            className="group flex items-center gap-4 py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50/50 px-2 -mx-2 rounded-xl transition-all"
+                        >
+                            {/* Thumbnail */}
+                            {article.coverImageUrl ? (
+                                <div
+                                    onClick={() => navigate(`/article/${article.slug}`)}
+                                    className="w-16 h-14 flex-shrink-0 cursor-pointer"
+                                >
+                                    <img
+                                        src={article.coverImageUrl}
+                                        alt={article.title}
+                                        className="w-full h-full object-cover rounded-lg shadow-sm"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="w-16 h-14 flex-shrink-0 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
+                                    <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                </div>
+                            )}
+
+                            {/* Text */}
+                            <div
+                                className="flex-1 min-w-0 cursor-pointer"
+                                onClick={() => navigate(`/article/${article.slug}`)}
+                            >
+                                <h3 className="text-sm font-semibold text-gray-900 leading-snug mb-1 truncate group-hover:text-green-700 transition-colors">
+                                    {article.title}
+                                </h3>
+                                <div className="flex items-center gap-2 text-xs text-gray-500">
+                                    <span className="font-medium">{article.authorName}</span>
+                                    <span>·</span>
+                                    <span>{article.readTime} min read</span>
+                                    <span>·</span>
+                                    {/* When YOU opened it */}
+                                    <span className="text-gray-400">{formatOpenedAt(article.openedAt)}</span>
+                                </div>
+                            </div>
+
+                            {/* Remove single item — shows on hover */}
+                            <button
+                                onClick={() => handleRemoveOne(article._id)}
+                                className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all flex-shrink-0"
+                                title="Remove from history"
+                            >
+                                <FiX size={14} />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </>
+        )}
+
+        {/* Clear all confirmation modal */}
+        {showClearConfirm && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 animate-in fade-in zoom-in-95 duration-200">
+                    <h2 className="text-xl font-bold text-gray-900 mb-2">Clear reading history?</h2>
+                    <p className="text-gray-500 text-sm mb-6">
+                        All {readingHistory.length} articles will be removed from your history. This can't be undone.
+                    </p>
+                    <div className="flex gap-3 justify-end">
+                        <button
+                            onClick={() => setShowClearConfirm(false)}
+                            className="px-5 py-2 rounded-full text-sm font-medium border border-gray-200 hover:border-gray-400 text-gray-700 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleClearHistory}
+                            className="px-5 py-2 rounded-full text-sm font-medium bg-red-600 hover:bg-red-700 text-white transition-colors"
+                        >
+                            Clear all
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+    </div>
+):
         (
           <div className="py-20 flex flex-col items-center justify-center text-center">
             <p className="text-gray-500 text-sm">No {activeTab.toLowerCase()} to show now.</p>

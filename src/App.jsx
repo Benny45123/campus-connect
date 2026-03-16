@@ -11,6 +11,7 @@ import FollowingPage from './pages/FollowingPage';
 import LibraryPage from './pages/LibraryPage'
 import ProfilePage from './pages/ProfilePage'
 import StoriesPage from './pages/StoriesPage'
+import UserProfilePage from './pages/UserProfilePage';
 
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
         <Route path='/:search' element={user ? <HomePage /> : <Auth />} />
         <Route path='/article/:slug' element={user ? <SelectedArticlePage /> : <Auth />} />
         <Route path="/Following" element={<FollowingPage />} />
+        <Route path="/user/:userId" element={<UserProfilePage />} />
       </Routes>
     </>
   )
